@@ -30,8 +30,22 @@ class TestBlink(unittest.TestCase):
     b = Blink()
     b.connect()
     events = b.events(b.networks[0])
-    event = events[0]
-    b.download_video(event)
+    if events:
+        event = events[0]
+        b.download_video(event)
+
+  def test_videos_list(self):
+    b = Blink()
+    b.connect()
+    videos = b.videos()
+    assert len(videos) > 0
+    print(videos[:10])
+
+  def test_download_by_address(self):
+    b = Blink()
+    b.connect()
+    videos = b.videos()
+    b.download_video_by_address(videos[0]['address'])
 
   def _test_download_thumbnail(self):
     '''doesn't work'''
@@ -46,24 +60,24 @@ class TestBlink(unittest.TestCase):
     b = Blink()
     b.connect()
     sync_modules = b.sync_modules(b.networks[0])
-    print sync_modules
+    print(sync_modules)
 
   def _test_arm(self):
     b = Blink()
     b.connect()
-    print b.arm(b.networks[0])
+    print(b.arm(b.networks[0]))
 
   def test_clients(self):
     b = Blink()
-    print b.clients()
+    print(b.clients())
 
   def test_regions(self):
     b = Blink()
-    print b.regions()
+    print(b.regions())
 
-  def _test_health(self):
+  def test_health(self):
     b = Blink()
-    print b.health()
+    print(b.health())
 
 
 

@@ -43,6 +43,7 @@ Typically this would be put into a cron job.
 |`command_status()`|Get status info on the given command. | yes | unknown | 
 |`homescreen()`|Return information displayed on the home screen of the mobile client. | yes | yes | 
 |`events(network)`|Get events for a given network (sync module). | yes | yes | 
+|`download_video_by_address`|Get a video clip using its address.| yes | yes |
 |`download_video(event)`|Get a video clip from the events list. | yes | yes | 
 |`download_thumbnail(event)`|Get a thumbnail from the events list. | yes | no | 
 |`cameras(network)`|Gets a list of cameras. | yes | yes | 

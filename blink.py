@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from __future__ import print_function
 import io, json, os, requests, sys, yaml
 import dateutil.parser
@@ -115,6 +116,7 @@ class Blink(object):
       self.networks.append(network)
     self._region = raw['region']
     self._authtoken = raw['authtoken']
+    self._server = 'rest-{}.immedia-semi.com'.format(list(self._region.keys())[0])
   
   def homescreen(self):
     '''
@@ -139,13 +141,19 @@ class Blink(object):
     cameras = [Camera(**camera) for camera in cameras]
     return cameras
   
-  def download_video(self, event):
+  def download_video_by_address(self, address):
     '''
       returns the mp4 data as a file-like object
     '''
     self._connect_if_needed()
-    resp = requests.get(self._path(event.video_url), headers=self._auth_headers)
+    resp = requests.get(self._path(address), headers=self._auth_headers)
     return resp.content
+
+  def download_video(self, event):
+    '''
+      returns the mp4 data as a file-like object
+    '''
+    return self.download_video_by_address(event.video_url)
 
   def download_thumbnail(self, event):
     '''
@@ -222,6 +230,23 @@ class Blink(object):
     resp = requests.get(self._path('health'), headers=self._auth_headers)
     return resp.json()
 
+  def videos(self):
+    '''
+      Gets a list of all the available videos
+    '''
+    self._connect_if_needed()
+    videos = []
+    resp = requests.get(self._path('api/v2/videos/count'), headers=self._auth_headers)
+    total = resp.json()['count']
+    page = 0
+    while len(videos) < total:
+        resp = requests.get(self._path('api/v2/videos/page/{}'.format(page)), headers=self._auth_headers)
+        if not resp.json():
+            break
+        for video in resp.json():
+            videos.append(video)
+        page += 1
+    return videos
 
 
   # UTIL FUNCTIONS
@@ -229,32 +254,40 @@ class Blink(object):
   def archive(self, path):
     self._connect_if_needed()
     for network in self.networks:
-      network_dir = os.path.join(path, network['name'])
+      network_dir = os.path.join(path, network.name)
       if not os.path.isdir(network_dir):
         os.mkdir(network_dir)
 
       already_downloaded = set()
-      for fn in os.listdir(network_dir):
-        if not fn.endswith('.mp4'): continue
-        fn = fn[:-4]
-        event_id = int(fn.split(' - ')[0])
-        already_downloaded.add(event_id)
+      for (dirname, subdirs, files) in os.walk(network_dir):
+        for fn in files:
+            if not fn.endswith('.mp4'): continue
+            already_downloaded.add(fn)
 
-      events = self.events(network['id'])
-      for event in events:
-        if event['id'] in already_downloaded: continue
-        when = dateutil.parser.parse(event['created_at'])
-        event_fn = os.path.join(network_dir, '%s - %s @ %s.mp4' % (event['id'], event['camera_name'], when.strftime('%Y-%m-%d %I:%M:%S %p %Z')))
-        print('Saving:', event_fn)
-        mp4 = self.download_video(event)
-        with open(event_fn,'w') as f:
+      videos = self.videos()
+      for video in videos:
+        address = video['address']
+        when = dateutil.parser.parse(video['created_at'])
+        video_name = '{}-{}.mp4'.format(video['camera_name'], when.strftime('%Y-%m-%d %I:%M:%S %p %Z'))
+        if video_name in already_downloaded:
+          print(f'Skipping {video_name}')
+          continue
+        date_dir = os.path.join(network_dir, when.strftime('%Y-%m-%d'))
+        if not os.path.isdir(date_dir):
+          os.mkdir(date_dir)
+        video_fn = os.path.join(date_dir, video_name)
+        print('Saving:', video_fn)
+        mp4 = self.download_video_by_address(address)
+        with open(video_fn,'wb') as f:
           f.write(mp4)
           
 
 def _main():        
   args = sys.argv[1:]
-  if args[0]=='--archive':
+  if len(args) > 1 and args[0]=='--archive':
     Blink().archive(args[1])
+  else:
+    print(f'Usage:\n\t{sys.argv[0]} --archive <dest_dir>')
   
 if __name__=='__main__':
   _main()
