@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-from __future__ import print_function
 import io, json, os, requests, sys, yaml
 import dateutil.parser
 
