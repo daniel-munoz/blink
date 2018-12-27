@@ -85,6 +85,9 @@ bin/
 include/
 pip-selfcheck.json
 
+# gradle
+.gradle
+
 # Spyder project settings
 .spyderproject
 
