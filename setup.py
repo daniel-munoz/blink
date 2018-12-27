@@ -5,9 +5,6 @@ with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 version = os.environ['VERSION'] or '0.3.0'
-print('***************')
-print(version)
-print('***************')
 
 setuptools.setup(
     name='blink-cameras',
