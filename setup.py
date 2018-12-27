@@ -1,9 +1,14 @@
+import os
 import setuptools
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
-version = '0.3.0'
+version = os.environ['VERSION'] or '0.3.0'
+print('***************')
+print(version)
+print('***************')
+
 setuptools.setup(
     name='blink-cameras',
     version=version,

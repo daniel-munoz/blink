@@ -4,9 +4,6 @@ import os
 import requests
 
 
-__version__ = '0.3.0'
-
-
 class Network(object):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
