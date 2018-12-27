@@ -3,7 +3,7 @@ import io, json, os, requests, sys
 import dateutil.parser
 
 
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 
 
 
