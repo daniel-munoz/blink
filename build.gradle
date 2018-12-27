@@ -1,0 +1,26 @@
+defaultTasks 'build'
+
+task virtualenv(type:Exec) {
+    commandLine 'virtualenv', '-p', 'python3', '.'
+}
+
+task installdependencies(type:Exec) {
+    commandLine 'bin/pip', 'install', 'requests', 'pyyaml', 'python-dateutil', 'pytest'
+}
+
+task test(type:Exec) {
+    commandLine 'bin/pytest', 'tests'
+}
+
+task build(type:Exec) {
+    commandLine 'bin/python', 'setup.py', 'sdist', 'bdist_wheel'
+}
+
+task publish(type:Exec) {
+    commandLine 'twine', 'upload', 'dist/*'
+}
+
+installdependencies.dependsOn virtualenv
+test.dependsOn installdependencies
+build.dependsOn test
+publish.dependsOn build
