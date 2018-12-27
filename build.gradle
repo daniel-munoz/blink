@@ -19,7 +19,7 @@ task virtualenv(type:Exec) {
 }
 
 task installdependencies(type:Exec) {
-    commandLine 'bin/pip', 'install', 'flake8', 'requests', 'pyyaml', 'python-dateutil', 'pytest', 'setuptools'
+    commandLine 'bin/pip', 'install', 'flake8', 'requests', 'pyyaml', 'python-dateutil', 'pytest', 'pytz', 'setuptools'
 }
 
 task test(type:Exec) {

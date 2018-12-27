@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import dateutil.parser
 import os
+import pytz
 import requests
 
 
@@ -253,7 +254,12 @@ class Blink(object):
             for video in videos:
                 address = video['address']
                 when = dateutil.parser.parse(video['created_at'])
-                video_name = '{}-{}.mp4'.format(video['camera_name'], when.strftime('%Y-%m-%d %I:%M:%S %p %Z'))
+                utcmoment = when.replace(tzinfo=pytz.utc)
+                when = utcmoment.astimezone(pytz.timezone(video['time_zone']))
+                video_name = '{}-{}.mp4'.format(
+                    video['camera_name'].replace(' ', '_'),
+                    when.strftime('%Y-%m-%d_%H:%M:%S_%Z'))
+
                 if video_name in already_downloaded:
                     print(f'Skipping {video_name}')
                     continue
