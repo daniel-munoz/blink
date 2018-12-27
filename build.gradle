@@ -5,11 +5,15 @@ task virtualenv(type:Exec) {
 }
 
 task installdependencies(type:Exec) {
-    commandLine 'bin/pip', 'install', 'requests', 'pyyaml', 'python-dateutil', 'pytest'
+    commandLine 'bin/pip', 'install', 'flake8', 'requests', 'pyyaml', 'python-dateutil', 'pytest', 'setuptools'
 }
 
 task test(type:Exec) {
     commandLine 'bin/pytest', 'tests'
+}
+
+task lint(type:Exec) {
+    commandLine 'bin/flake8', 'blink', 'tests'
 }
 
 task build(type:Exec) {
@@ -21,6 +25,7 @@ task publish(type:Exec) {
 }
 
 installdependencies.dependsOn virtualenv
-test.dependsOn installdependencies
+lint.dependsOn installdependencies
+test.dependsOn lint
 build.dependsOn test
 publish.dependsOn build
