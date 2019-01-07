@@ -164,7 +164,7 @@ class Blink(object):
             client must gather the request ID from the response and poll for the status of the command.
         '''
         self._connect_if_needed()
-        resp = requests.get(self._path('network/%s/arm' % network.id), headers=self._auth_headers)
+        resp = requests.post(self._path('network/%s/arm' % network.id), headers=self._auth_headers)
         return resp.json()
 
     def disarm(self, network):
@@ -176,7 +176,7 @@ class Blink(object):
             the client must gather the request ID from the response and poll for the status of the command.
         '''
         self._connect_if_needed()
-        resp = requests.get(self._path('network/%s/disarm' % network.id), headers=self._auth_headers)
+        resp = requests.post(self._path('network/%s/disarm' % network.id), headers=self._auth_headers)
         return resp.json()
 
     def command_status(self, network, command_id):

@@ -38,8 +38,8 @@ Typically this would be put into a cron job.
 |`connect()`|Client login to the Blink Servers. | yes | yes | 
 |`networks()`|Obtain information about the Blink networks defined for the logged in user. | yes | yes | 
 |`sync_modules(network)`|Obtain information about the Blink Sync Modules on the given network. | yes | yes | 
-|`arm(network)`|Arm the given network (start recording/reporting motion events). | yes | no | 
-|`disarm(network)`|Disarm the given network (stop recording/reporting motion events. | yes | no | 
+|`arm(network)`|Arm the given network (start recording/reporting motion events). | yes | yes | 
+|`disarm(network)`|Disarm the given network (stop recording/reporting motion events. | yes | yes | 
 |`command_status()`|Get status info on the given command. | yes | unknown | 
 |`homescreen()`|Return information displayed on the home screen of the mobile client. | yes | yes | 
 |`events(network)`|Get events for a given network (sync module). | yes | yes | 
