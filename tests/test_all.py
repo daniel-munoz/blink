@@ -50,8 +50,8 @@ class TestBlink:
         b.connect()
         events = b.events(b.networks[0])
         if events:
-                event = events[0]
-                b.download_video(event)
+            event = events[0]
+            b.download_video(event)
 
     def test_videos_list(self, credentials):
         b = Blink(credentials['email'], credentials['password'])

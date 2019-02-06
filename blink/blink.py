@@ -223,16 +223,19 @@ class Blink(object):
         '''
         self._connect_if_needed()
         videos = []
-        resp = requests.get(self._path('api/v2/videos/count'), headers=self._auth_headers)
-        total = resp.json()['count']
+        next_page = True
         page = 0
-        while len(videos) < total:
-                resp = requests.get(self._path('api/v2/videos/page/{}'.format(page)), headers=self._auth_headers)
-                if not resp.json():
-                        break
-                for video in resp.json():
-                        videos.append(video)
-                page += 1
+        while next_page:
+            resp = requests.get(self._path(f'api/v2/videos/changed?since=2018-06-01T23:11:21+0000&page={page}'),
+                                headers=self._auth_headers)
+            if not resp.json():
+                break
+            json_videos = resp.json().get('videos', [])
+            if len(json_videos) == 0:
+                next_page = False
+            for video in json_videos:
+                videos.append(video)
+            page += 1
         return videos
 
     # UTIL FUNCTIONS
@@ -246,9 +249,9 @@ class Blink(object):
             already_downloaded = set()
             for (dirname, subdirs, files) in os.walk(network_dir):
                 for fn in files:
-                        if not fn.endswith('.mp4'):
-                            continue
-                        already_downloaded.add(fn)
+                    if not fn.endswith('.mp4'):
+                        continue
+                    already_downloaded.add(fn)
 
             videos = self.videos()
             for video in videos:
@@ -271,3 +274,4 @@ class Blink(object):
                 mp4 = self.download_video_by_address(address)
                 with open(video_fn, 'wb') as f:
                     f.write(mp4)
+                already_downloaded.add(video_name)
