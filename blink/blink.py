@@ -217,6 +217,27 @@ class Blink(object):
         resp = requests.get(self._path('health'), headers=self._auth_headers)
         return resp.json()
 
+    def videosv1(self):
+        '''
+            Gets a list of all the available videos
+        '''
+        self._connect_if_needed()
+        videos = []
+        next_page = True
+        page = 0
+        while next_page:
+            resp = requests.get(self._path(f'api/v1/accounts/{self.networks[0].id}/media/changed?since=2019-04-19T23:11:20+0000&page={page}'),
+                                headers=self._auth_headers)
+            if not resp.json():
+                break
+            json_videos = resp.json().get('media', [])
+            if len(json_videos) == 0:
+                next_page = False
+            for video in json_videos:
+                videos.append(video)
+            page += 1
+        return videos
+
     def videos(self):
         '''
             Gets a list of all the available videos
@@ -254,13 +275,15 @@ class Blink(object):
                     already_downloaded.add(fn)
 
             videos = self.videos()
+            videos.extend(self.videosv1()) # changes in the API on Apr/May 2019
             for video in videos:
-                address = video['address']
+                address = video.get('address', video.get('media'))
                 when = dateutil.parser.parse(video['created_at'])
                 utcmoment = when.replace(tzinfo=pytz.utc)
                 when = utcmoment.astimezone(pytz.timezone(video['time_zone']))
+                camera_name = video.get('camera_name', video.get('device_name')) # it's one or the other
                 video_name = '{}-{}.mp4'.format(
-                    video['camera_name'].replace(' ', '_'),
+                    camera_name.replace(' ', '_'),
                     when.strftime('%Y-%m-%d_%H:%M:%S_%Z'))
 
                 if video_name in already_downloaded:
