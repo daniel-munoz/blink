@@ -33,26 +33,6 @@ class TestBlink:
         data = b.homescreen()
         assert data['account'] is not None
 
-    def test_events(self, credentials):
-        b = Blink(credentials['email'], credentials['password'])
-        b.connect()
-        events = b.events(b.networks[0])
-        assert type(events) == list
-
-    def test_cameras(self, credentials):
-        b = Blink(credentials['email'], credentials['password'])
-        b.connect()
-        cameras = b.cameras(b.networks[0])
-        assert type(cameras) == list
-
-    def test_download_video(self, credentials):
-        b = Blink(credentials['email'], credentials['password'])
-        b.connect()
-        events = b.events(b.networks[0])
-        if events:
-            event = events[0]
-            b.download_video(event)
-
     def test_videos_list(self, credentials):
         b = Blink(credentials['email'], credentials['password'])
         b.connect()
@@ -64,7 +44,7 @@ class TestBlink:
         b = Blink(credentials['email'], credentials['password'])
         b.connect()
         videos = b.videos()
-        b.download_video_by_address(videos[0]['address'])
+        b.download_video_by_address(videos[0].address)
 
     def _test_download_thumbnail(self, credentials):
         '''doesn't work'''
