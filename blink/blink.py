@@ -14,17 +14,6 @@ class Network(object):
         return '<Network id=%s name=%s>' % (self.id, repr(self.name))
 
 
-class Event(object):
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    def __repr__(self):
-        return '<Event id=%s camera=%s at=%s>' % (self.id,
-                                                  repr(self.camera_name),
-                                                  repr(self.created_at))
-
-
 class SyncModule(object):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
@@ -32,15 +21,6 @@ class SyncModule(object):
 
     def __repr__(self):
         return '<SyncModule %s>' % repr(self.__dict__)
-
-
-class Camera(object):
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
-    def __repr__(self):
-        return '<Camera id=%s name=%s>' % (self.id, repr(self.name))
 
 
 class Blink(object):
@@ -103,22 +83,6 @@ class Blink(object):
         self._connect_if_needed()
         resp = requests.get(self._path('homescreen'), headers=self._auth_headers)
         return resp.json()
-
-    def events(self, network, type='motion'):
-        self._connect_if_needed()
-        resp = requests.get(self._path('events/network/%s' % network.id), headers=self._auth_headers)
-        events = resp.json()['event']
-        if type:
-            events = [e for e in events if e['type'] == 'motion']
-        events = [Event(**event) for event in events]
-        return events
-
-    def cameras(self, network, type='motion'):
-        self._connect_if_needed()
-        resp = requests.get(self._path('network/%s/cameras' % network.id), headers=self._auth_headers)
-        cameras = resp.json()['devicestatus']
-        cameras = [Camera(**camera) for camera in cameras]
-        return cameras
 
     def download_video_by_address(self, address):
         '''
@@ -217,16 +181,16 @@ class Blink(object):
         resp = requests.get(self._path('health'), headers=self._auth_headers)
         return resp.json()
 
-    def videosv1(self):
+    def _videosv1(self):
         '''
-            Gets a list of all the available videos
+            Gets a list of all the available videos using v1
         '''
         self._connect_if_needed()
         videos = []
         next_page = True
         page = 0
         while next_page:
-            resp = requests.get(self._path(f'api/v1/accounts/{self.networks[0].id}/media/changed?since=2019-04-19T23:11:20+0000&page={page}'),
+            resp = requests.get(self._path(f'api/v1/accounts/{self.networks[0].id}/media/changed?since=2019-01-19T23:11:20+0000&page={page}'),
                                 headers=self._auth_headers)
             if not resp.json():
                 break
@@ -238,9 +202,9 @@ class Blink(object):
             page += 1
         return videos
 
-    def videos(self):
+    def _videosv2(self):
         '''
-            Gets a list of all the available videos
+            Gets a list of all the available videos using v2
         '''
         self._connect_if_needed()
         videos = []
@@ -259,6 +223,27 @@ class Blink(object):
             page += 1
         return videos
 
+    def videos(self):
+        class Video:
+            def __init__(selfvideo, camera_name, timestamp, address):
+                selfvideo.camera_name = camera_name
+                selfvideo.timestamp = timestamp
+                selfvideo.address = address
+                selfvideo._blink_service = self
+            def download(selfvideo):
+                return selfvideo._blink_service.download_video_by_address(selfvideo.address)
+        videos = self._videosv1() # changes in the API on Apr/May 2019
+        result = []
+        for video in videos:
+            address = video.get('address', video.get('media'))
+            when = dateutil.parser.parse(video['created_at'])
+            utcmoment = when.replace(tzinfo=pytz.utc)
+            when = utcmoment.astimezone(pytz.timezone(video['time_zone']))
+            camera_name = video.get('camera_name', video.get('device_name')) # it's one or the other
+            result.append(Video(camera_name, when, address))
+        return result
+
+
     # UTIL FUNCTIONS
     def archive(self, path):
         self._connect_if_needed()
@@ -275,13 +260,10 @@ class Blink(object):
                     already_downloaded.add(fn)
 
             videos = self.videos()
-            videos.extend(self.videosv1()) # changes in the API on Apr/May 2019
             for video in videos:
-                address = video.get('address', video.get('media'))
-                when = dateutil.parser.parse(video['created_at'])
-                utcmoment = when.replace(tzinfo=pytz.utc)
-                when = utcmoment.astimezone(pytz.timezone(video['time_zone']))
-                camera_name = video.get('camera_name', video.get('device_name')) # it's one or the other
+                address = video.address
+                when = video.timestamp
+                camera_name = video.camera_name
                 video_name = '{}-{}.mp4'.format(
                     camera_name.replace(' ', '_'),
                     when.strftime('%Y-%m-%d_%H:%M:%S_%Z'))
@@ -294,7 +276,7 @@ class Blink(object):
                     os.mkdir(date_dir)
                 video_fn = os.path.join(date_dir, video_name)
                 print('Saving:', video_fn)
-                mp4 = self.download_video_by_address(address)
+                mp4 = video.download()
                 with open(video_fn, 'wb') as f:
                     f.write(mp4)
                 already_downloaded.add(video_name)
