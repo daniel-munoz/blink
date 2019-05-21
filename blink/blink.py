@@ -190,8 +190,10 @@ class Blink(object):
         next_page = True
         page = 0
         while next_page:
-            resp = requests.get(self._path(f'api/v1/accounts/{self.networks[0].id}/media/changed?since=2019-01-19T23:11:20+0000&page={page}'),
-                                headers=self._auth_headers)
+            resp = requests.get(
+                self._path(
+                    f'api/v1/accounts/{self.networks[0].id}/media/changed?since=2019-01-19T23:11:20+0000&page={page}'),
+                headers=self._auth_headers)
             if not resp.json():
                 break
             json_videos = resp.json().get('media', [])
@@ -230,19 +232,20 @@ class Blink(object):
                 selfvideo.timestamp = timestamp
                 selfvideo.address = address
                 selfvideo._blink_service = self
+
             def download(selfvideo):
                 return selfvideo._blink_service.download_video_by_address(selfvideo.address)
-        videos = self._videosv1() # changes in the API on Apr/May 2019
+
+        videos = self._videosv1()  # changes in the API on Apr/May 2019
         result = []
         for video in videos:
             address = video.get('address', video.get('media'))
             when = dateutil.parser.parse(video['created_at'])
             utcmoment = when.replace(tzinfo=pytz.utc)
             when = utcmoment.astimezone(pytz.timezone(video['time_zone']))
-            camera_name = video.get('camera_name', video.get('device_name')) # it's one or the other
+            camera_name = video.get('camera_name', video.get('device_name'))  # it's one or the other
             result.append(Video(camera_name, when, address))
         return result
-
 
     # UTIL FUNCTIONS
     def archive(self, path):
@@ -261,7 +264,6 @@ class Blink(object):
 
             videos = self.videos()
             for video in videos:
-                address = video.address
                 when = video.timestamp
                 camera_name = video.camera_name
                 video_name = '{}-{}.mp4'.format(
